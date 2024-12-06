@@ -1,7 +1,7 @@
 def check_number_decorator(func):
     def check(*args, **kwargs):
         result = func(*args, **kwargs)
-        if type(*args) is int:
+        if type(result) is int:
             new_result = result + 10
         else:
             new_result = result
