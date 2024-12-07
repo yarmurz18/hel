@@ -11,7 +11,7 @@ class Car:
 
     @property
     def cost_of_service(self):
-        return self.mileage * 7.6  
+        return self.mileage * 7.6
 
 
 car1 = Car(2020, "Toyota", "Corolla", 6.5)
