@@ -15,86 +15,77 @@ class BaseStorage(ABC):
         pass
 
     @abstractmethod
-    def get_offers_info(self, offer_id: str):
+    def get_offer_info(self, offer_id: str):
         pass
 
     @abstractmethod
-    def update_offers(self, offer_id:str, country: str):
+    def update_offer(self, offer_id:str, country: str):
         pass
 
     @abstractmethod
-    def delete_offers(self, offer_id: str):
+    def delete_offer(self, offer_id: str):
         pass
 
 
 class JSONStorage(BaseStorage):
     def __init__(self):
-        self.file_name = "storage.json"
-
-        my_file = Path(self.file_name)
+        self.__file_name = "storage.json"
+        my_file = Path(self.__file_name)
         if not my_file.is_file():
-            with open(self.file_name, mode="w", encoding="utf-8") as file:
+            with open(self.__file_name, mode="w", encoding="utf-8") as file:
                 json.dump([], file, indent=4)
 
     def create_offer(self, offer: dict):
-        with open(self.file_name, mode="r") as file:
+        with open(self.__file_name, mode="r", encoding="utf-8") as file:
             content: list[dict] = json.load(file)
 
         offer["id"] = uuid4().hex
         content.append(offer)
-        with open(self.file_name, mode="w", encoding="utf-8") as file:
+        with open(self.__file_name, mode="w", encoding="utf-8") as file:
             json.dump(content, file, indent=4)
+        return offer
 
     def get_offers(self, skip: int = 0, limit: int = 15, search_param: str = ""):
-        with open(self.file_name, mode="r") as file:
+        with open(self.__file_name, mode="r", encoding="utf-8") as file:
             content: list[dict] = json.load(file)
 
         if search_param:
-            data = []
-            for offer in content:
-                if search_param in offer["country"]:
-                    data.append(offer)
-            sliced = data[skip:][limit:]
-            return sliced
+            content = [offer for offer in content if search_param.lower() in offer["country"].lower()]
+        return content[skip: skip + limit]
 
-        sliced = content[skip:][limit:]
-        return sliced
-
-    def get_offers_info(self, offer_id: str):
-        with open(self.file_name, mode="r") as file:
+    def get_offer_info(self, offer_id: str):
+        with open(self.__file_name, mode="r", encoding="utf-8") as file:
             content: list[dict] = json.load(file)
+
         for offer in content:
-            if offer_id == offer["id"]:
+            if offer["id"] == offer_id:
                 return offer
-        return {}
+        return None
 
-    def update_offers(self, offer_id: str, country: str):
-        with open(self.file_name, mode="r") as file:
+    def update_offer(self, offer_id: str, **kwargs):
+        with open(self.__file_name, mode="r", encoding="utf-8") as file:
             content: list[dict] = json.load(file)
-        was_found = False
-        for offer in content:
-            if offer_id == offer["id"]:
-                offer["country"] = country
-                was_found = True
-                break
-        if  was_found:
-            with open(self.file_name, mode="w", encoding="utf-8") as file:
-                json.dump(content, file, indent=4)
-        raise ValueError
 
-    def delete_offers(self, offer_id: str):
-        with open(self.file_name, mode="r") as file:
-            content: list[dict] = json.load(file)
-        was_found = False
         for offer in content:
-            if offer_id == offer["id"]:
-                content.remove(offer)
-                was_found = True
-                break
-        if was_found:
-            with open(self.file_name, mode="w", encoding="utf-8") as file:
-                json.dump(content, file, indent=4)
-        raise ValueError
+            if offer["id"] == offer_id:
+                for key, value in kwargs.items():
+                    if key in offer:
+                        offer[key] = value
+                with open(self.__file_name, mode="w", encoding="utf-8") as file:
+                    json.dump(content, file, indent=4)
+                return offer
+        raise ValueError(f"Offer with ID {offer_id} not found")
+
+    def delete_offer(self, offer_id: str):
+        with open(self.__file_name, mode="r", encoding="utf-8") as file:
+            content: list[dict] = json.load(file)
+
+        updated_content = [offer for offer in content if offer["id"] != offer_id]
+        if len(updated_content) < len(content):
+            with open(self.__file_name, mode="w", encoding="utf-8") as file:
+                json.dump(updated_content, file, indent=4)
+            return True
+        raise ValueError(f"Offer with ID {offer_id} not found")
 
 
 storage = JSONStorage()
