@@ -87,4 +87,3 @@ def delete_offer(offer_id: str, current_user: User = Depends(get_current_user)) 
 def update_offer(offer_id: str, updates: dict, current_user: User = Depends(get_current_user)) -> SavedOffer:
     updated_offer = storage.update_offer(offer_id, **updates)
     return SavedOffer(**updated_offer)
-
